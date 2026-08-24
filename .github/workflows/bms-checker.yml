@@ -1,10 +1,9 @@
 name: BMS Ticket Checker
 
 on:
-  schedule:
-    # Every 5 minutes
-    - cron: '*/5 * * * *'
-  workflow_dispatch:  # Manual trigger button
+  repository_dispatch:
+    types: [external-cron]
+  workflow_dispatch: # Manual trigger button
 
 jobs:
   check-tickets:
