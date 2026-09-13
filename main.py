@@ -586,9 +586,12 @@ def main():
             if m_info["name"] and m_info["name"] not in movie_names:
                 movie_names.append(m_info["name"])
 
-            all_dates.extend(parse_dates(data))
-            all_shows.extend(parse_shows(data))
+            dates_found = parse_dates(data)
+            shows_found = parse_shows(data)
 
+            all_dates.extend(dates_found)
+            all_shows.extend(shows_found)
+            
             # Extract and log screens found in the payload for this date
             screens_in_data = sorted({s.screen_attr for s in shows_found if s.screen_attr})
             screen_info = ", ".join(screens_in_data) if screens_in_data else "Standard/Default"
