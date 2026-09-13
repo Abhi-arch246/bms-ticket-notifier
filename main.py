@@ -343,6 +343,7 @@ def build_state(shows, dates):
                 "cat": c.name,
                 "price": c.price,
                 "status": c.status,
+                "screen": s.screen_attr,
             }
 
     date_state = {
@@ -370,8 +371,9 @@ def detect_changes(old_state, new_state):
     # New showtimes
     for key in set(new_shows) - set(old_shows):
         s = new_shows[key]
+        scr = f" [{s['screen']}]" if s.get("screen") else ""
         changes.append(
-            f"🆕 NEW: {s['venue']} {s['time']} [{s['date']}] "
+            f"🆕 NEW: {s['venue']} {s['time']}{scr} [{s['date']}] "
             f"— {s['cat']} ₹{s['price']}"
         )
 
@@ -382,8 +384,9 @@ def detect_changes(old_state, new_state):
             lbl, ico = AVAIL_STATUS_MAP.get(
                 new_s["status"], ("UNKNOWN", "⚪")
             )
+            scr = f" [{new_s['screen']}]" if new_s.get("screen") else ""
             changes.append(
-                f"{ico} BACK: {new_s['venue']} {new_s['time']} "
+                f"{ico} BACK: {new_s['venue']} {new_s['time']}{scr} "
                 f"[{new_s['date']}] — {new_s['cat']} → {lbl}"
             )
 
