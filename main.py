@@ -24,9 +24,10 @@ CONFIG = {
         "BMS_URL",
         "https://in.bookmyshow.com/movies/chennai/dhurandhar-the-revenge/buytickets/ET00478890"
     ),
-    "dates": os.getenv("BMS_DATES", ""),          # comma-separated YYYYMMDD, empty = from URL
-    "theatre": os.getenv("BMS_THEATRE", ""),       # substring filter, empty = all
-    "time_period": os.getenv("BMS_TIME", ""),      # e.g. "evening,night", empty = all
+    "dates": os.getenv("BMS_DATES", ""),                        # comma-separated YYYYMMDD, empty = from URL
+    "theatre": os.getenv("BMS_THEATRE", ""),                    # substring filter, empty = all
+    "time_period": os.getenv("BMS_TIME", ""),                   # e.g. "evening,night", empty = all
+    "screen": os.getenv("BMS_SCREEN", "HDR BY BARCO,PCX SCREEN")   # e.g "HDR BY BARCO,PCX SCREEN,DOLBY CINEMA", empty = all
 }
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
@@ -274,8 +275,15 @@ def filter_shows(shows, theatre_filter, time_periods, date_codes):
                if p.strip()] if time_periods else []
     dates_set = set(d.strip() for d in date_codes.split(",")
                     if d.strip()) if date_codes else set()
+    screens_set = {s.strip().upper() for s in screen_filter.split(",") 
+                    if s.strip()} if screen_filter else set()
 
     for s in shows:
+
+        # Screen attribute filter
+        if screens_set and s.screen_attr.strip().upper() not in screens_set:
+            continue
+
         # Theatre filter
         if kws:
             name_lower = s.venue_name.lower()
@@ -584,6 +592,7 @@ def main():
         CONFIG["theatre"],
         CONFIG["time_period"],
         CONFIG["dates"],
+        CONFIG["screen"]
     )
     print(f"  📊 {len(filtered)} showtime(s) after filters")
 
