@@ -539,55 +539,61 @@ def main():
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now_str}] BMS Ticket Checker — CI mode")
 
-    # Parse config
-    parsed = parse_bms_url(CONFIG["url"])
-    event_code = parsed["event_code"]
-    region_slug = parsed["region_slug"]
-    url_date = parsed.get("date_code", "")
-
-    if not event_code or not region_slug:
-        print("  ❌ Invalid BMS_URL. Could not extract event/region.")
+    # Split BMS_URL into a list of URLs
+    raw_urls = CONFIG["url"].strip()
+    urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
+    if not urls:
+        print("  ❌ No valid URLs provided in BMS_URL.")
         sys.exit(1)
 
-    region_code, region_slug_r, lat, lon, geohash = resolve_region(
-        region_slug
-    )
-
-    # Determine dates to check
-    raw_dates = CONFIG["dates"].strip()
-    if raw_dates:
-        date_list = [d.strip() for d in raw_dates.split(",") if d.strip()]
-    elif url_date:
-        date_list = [url_date]
-    else:
-        date_list = [""]
-
-    print(f"  Event: {event_code}  Region: {region_code}  "
-          f"Dates: {date_list}")
-
-    # Fetch data for each date
     all_shows = []
     all_dates = []
-    movie_info = {"name": "Unknown", "language": ""}
+    movie_names = []
 
-    for dc in date_list:
-        data = fetch_bms(event_code, dc, region_code,
-                         region_slug_r, lat, lon, geohash)
-        if not data:
-            print(f"  ⚠️  No data for date {dc or '(default)'}")
+    # Process each URL
+    for url in urls:
+        parsed = parse_bms_url(url)
+        event_code = parsed["event_code"]
+        region_slug = parsed["region_slug"]
+        url_date = parsed.get("date_code", "")
+
+        if not event_code or not region_slug:
+            print(f"  ❌ Invalid BMS_URL: {url}")
             continue
 
-        if movie_info["name"] == "Unknown":
-            movie_info = parse_movie_info(data)
+        region_code, region_slug_r, lat, lon, geohash = resolve_region(region_slug)
 
-        all_dates.extend(parse_dates(data))
-        all_shows.extend(parse_shows(data))
+        # Determine dates to check for this URL
+        raw_dates = CONFIG["dates"].strip()
+        if raw_dates:
+            date_list = [d.strip() for d in raw_dates.split(",") if d.strip()]
+        elif url_date:
+            date_list = [url_date]
+        else:
+            date_list = [""]
+
+        print(f"  Event: {event_code}  Region: {region_code}  Dates: {date_list}")
+
+        # Fetch data for each date
+        for dc in date_list:
+            data = fetch_bms(event_code, dc, region_code, region_slug_r, lat, lon, geohash)
+            if not data:
+                print(f"  ⚠️  No data for date {dc or '(default)'}")
+                continue
+
+            m_info = parse_movie_info(data)
+            if m_info["name"] and m_info["name"] not in movie_names:
+                movie_names.append(m_info["name"])
+
+            all_dates.extend(parse_dates(data))
+            all_shows.extend(parse_shows(data))
 
     if not all_shows:
-        print("  ❌ No showtimes found.")
+        print("  ❌ No showtimes found across provided URLs.")
         sys.exit(0)
 
-    print(f"  🎬 {movie_info['name']}  {movie_info['language']}")
+    combined_movie_info = {"name": ", ".join(movie_names) if movie_names else "Movie"}
+    print(f"  🎬 Movies: {combined_movie_info['name']}")
 
     # Apply filters
     filtered = filter_shows(
@@ -595,7 +601,7 @@ def main():
         CONFIG["theatre"],
         CONFIG["time_period"],
         CONFIG["dates"],
-        CONFIG["screen"]
+        CONFIG["screen"],
     )
     print(f"  📊 {len(filtered)} showtime(s) after filters")
 
@@ -612,7 +618,6 @@ def main():
     # Build state & detect changes
     new_state = build_state(filtered, all_dates)
     old_state = load_state()
-
     changes = []
     if old_state:
         changes = detect_changes(old_state, new_state)
@@ -623,19 +628,19 @@ def main():
         print(f"\n  ⚡ {len(changes)} change(s) detected:")
         for c in changes:
             print(f"     {c}")
-            
-        # Safely collect unique screen attributes for all filtered shows
+
         screens = ", ".join(sorted(set(s.screen_attr for s in filtered if s.screen_attr)))
         screen_part = f" | {screens}" if screens else ""
-        
         send_email(
-            f"BMS Alert: {movie_info['name']}{screen_part} - {len(changes)} change(s)",
-            changes, filtered, movie_info,
+            f"BMS Alert: {combined_movie_info['name']}{screen_part} - {len(changes)} change(s)",
+            changes,
+            filtered,
+            combined_movie_info,
         )
     else:
         print("  ✅ No changes since last check.")
 
     print("\n  Done.")
-
+    
 if __name__ == "__main__":
     main()
