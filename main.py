@@ -587,6 +587,16 @@ def main():
     )
     print(f"  📊 {len(filtered)} showtime(s) after filters")
 
+    # Print current status
+    print(f"\n  Current status ({len(filtered)} shows):")
+    for s in filtered:
+        cats = ", ".join(
+            f"{c.name}=₹{c.price}({AVAIL_STATUS_MAP.get(c.status, ('?',''))[0]})"
+            for c in s.categories
+        )
+        fmt = f"|{s.screen_attr}" if s.screen_attr else ""
+        print(f"    {s.venue_name} — {s.time}{fmt} [{s.date_code}] — {cats}")
+
     # Build state & detect changes
     new_state = build_state(filtered, all_dates)
     old_state = load_state()
@@ -601,25 +611,19 @@ def main():
         print(f"\n  ⚡ {len(changes)} change(s) detected:")
         for c in changes:
             print(f"     {c}")
+            
+        # Safely collect unique screen attributes for all filtered shows
+        screens = ", ".join(sorted(set(s.screen_attr for s in filtered if s.screen_attr)))
+        screen_part = f" | {screens}" if screens else ""
+        
         send_email(
-            f"BMS Alert: {movie_info['name']} - {len(changes)} change(s)",
+            f"BMS Alert: {movie_info['name']}{screen_part} - {len(changes)} change(s)",
             changes, filtered, movie_info,
         )
     else:
         print("  ✅ No changes since last check.")
 
-    # Print current status
-    print(f"\n  Current status ({len(filtered)} shows):")
-    for s in filtered:
-        cats = ", ".join(
-            f"{c.name}=₹{c.price}({AVAIL_STATUS_MAP.get(c.status, ('?',''))[0]})"
-            for c in s.categories
-        )
-        fmt = f"|{s.screen_attr}" if s.screen_attr else ""
-        print(f"    {s.venue_name} — {s.time}{fmt} [{s.date_code}] — {cats}")
-
     print("\n  Done.")
-
 
 if __name__ == "__main__":
     main()
