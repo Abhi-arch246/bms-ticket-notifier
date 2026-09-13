@@ -267,7 +267,7 @@ def parse_shows(data):
 # ──────────────────────────────────────────────────────────────────────
 # FILTERING
 # ──────────────────────────────────────────────────────────────────────
-def filter_shows(shows, theatre_filter, time_periods, date_codes):
+def filter_shows(shows, theatre_filter, time_periods, date_codes, screen_filter=""):
     result = []
     kws = [k.strip().lower() for k in theatre_filter.split(",")
            if k.strip()] if theatre_filter else []
