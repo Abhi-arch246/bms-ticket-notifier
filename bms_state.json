@@ -15,13 +15,21 @@
       "cat": " EXECUTIVE + 3D Glass",
       "price": "325.00",
       "status": "2"
+    },
+    "PRHN|256321|20260929|GOLD + 3D GlassL": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "08:00 AM",
+      "date": "20260929",
+      "cat": "GOLD + 3D GlassL",
+      "price": "400.00",
+      "status": "3"
     }
   },
   "dates": {
     "20260926": "AVAILABLE",
-    "20260927": "BOOKABLE",
+    "20260927": "AVAILABLE",
     "20260928": "AVAILABLE",
-    "20260929": "AVAILABLE",
+    "20260929": "BOOKABLE",
     "20260930": "NOT_OPEN",
     "20261001": "NOT_OPEN",
     "20261002": "NOT_OPEN"
