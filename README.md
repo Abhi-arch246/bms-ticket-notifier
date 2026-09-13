@@ -34,7 +34,7 @@ Go to **Settings → Secrets and variables → Actions → Variables** and add:
 | `BMS_DATES`   | Dates to monitor (YYYYMMDD, comma-separated). Leave empty to auto-detect from URL. | `20260318,20260319`                                       |
 | `BMS_THEATRE` | Filter by theatre name (substring match, comma-separated)                          | `PVR,IMAX`                                                |
 | `BMS_TIME`    | Filter by time period (comma-separated)                                            | `evening,night`                                           |
-| `BMS_SCREEN   | Filter by time period (comma-separated)                                            | `HDR BY BARCO, PCX SCREEN, DOLBY CINEMA, EPIQ`            |
+| `BMS_SCREEN`  | Filter by time period (comma-separated)                                            | `HDR BY BARCO, PCX SCREEN, DOLBY CINEMA, EPIQ`            |
 
 **Time periods:** `morning` (6–12), `afternoon` (12–16), `evening` (16–19), `night` (19–24)
 
