@@ -572,13 +572,14 @@ def main():
         else:
             date_list = [""]
 
-        print(f"  Event: {event_code}  Region: {region_code}  Dates: {date_list}")
+        screen_filter = CONFIG["screen"].strip()
+        print(f"  Event: {event_code}  Region: {region_code}  Target Screen(s): [{screen_filter or 'ALL'}]  Dates: {date_list}")
 
         # Fetch data for each date
         for dc in date_list:
             data = fetch_bms(event_code, dc, region_code, region_slug_r, lat, lon, geohash)
             if not data:
-                print(f"  ⚠️  No data for date {dc or '(default)'}")
+                print(f"  ⚠️  No data received for event {event_code} [{screen_filter or 'ALL'}] on date {dc or '(default)'}")
                 continue
 
             m_info = parse_movie_info(data)
@@ -587,6 +588,11 @@ def main():
 
             all_dates.extend(parse_dates(data))
             all_shows.extend(parse_shows(data))
+
+            # Extract and log screens found in the payload for this date
+            screens_in_data = sorted({s.screen_attr for s in shows_found if s.screen_attr})
+            screen_info = ", ".join(screens_in_data) if screens_in_data else "Standard/Default"
+            print(f"     📅 Date {dc or '(default)'}: {len(shows_found)} show(s) fetched | Screens present: {screen_info}")
 
     if not all_shows:
         print("  ❌ No showtimes found across provided URLs.")
