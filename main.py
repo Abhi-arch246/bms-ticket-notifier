@@ -1,11 +1,6 @@
 """
-BMS Ticket Checker — CI/Headless mode for GitHub Actions.
-Runs once, checks all configured watches, emails on changes.
-State is persisted via a JSON artifact.
-
-Configure via environment variables or edit the CONFIG below.
+BMS Ticket Checker — CI/Headless mode for GitHub Actions. Runs once, checks all configured watches, emails on changes. State is persisted via a JSON artifact. Configure via environment variables or edit the CONFIG below.
 """
-
 import os
 import re
 import sys
@@ -20,10 +15,7 @@ import requests
 # CONFIGURATION — edit these or set via env vars
 # ──────────────────────────────────────────────────────────────────────
 CONFIG = {
-    "url": os.getenv(
-        "BMS_URL",
-        "https://in.bookmyshow.com/movies/chennai/dhurandhar-the-revenge/buytickets/ET00478890"
-    ),
+    "url": os.getenv("BMS_URL", "https://in.bookmyshow.com/movies/chennai/dhurandhar-the-revenge/buytickets/ET00478890"),
     "dates": os.getenv("BMS_DATES", ""),                        # comma-separated YYYYMMDD, empty = from URL
     "theatre": os.getenv("BMS_THEATRE", ""),                    # substring filter, empty = all
     "time_period": os.getenv("BMS_TIME", ""),                   # e.g. "evening,night", empty = all
@@ -33,7 +25,6 @@ CONFIG = {
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_TO_EMAIL = os.getenv("RESEND_TO_EMAIL", "")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "aviiciii@resend.dev")
-
 STATE_FILE = "bms_state.json"
 
 # ──────────────────────────────────────────────────────────────────────
@@ -72,8 +63,7 @@ REGION_MAP = {
     "kochi":      ("KOCH",   "kochi",      "9.932",  "76.267", "t9z"),
 }
 
-
-# ─────────────────────────────────────���────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────
 # DATA
 # ──────────────────────────────────────────────────────────────────────
 @dataclass
@@ -98,7 +88,6 @@ class DateInfo:
     date_code: str
     status: str
 
-
 # ──────────────────────────────────────────────────────────────────────
 # URL PARSER + REGION RESOLVER
 # ──────────────────────────────────────────────────────────────────────
@@ -117,13 +106,11 @@ def parse_bms_url(url):
             result["region_slug"] = parts[idx + 1]
     return result
 
-
 def resolve_region(slug):
     key = (slug or "").lower().strip()
     if key in REGION_MAP:
         return REGION_MAP[key]
     return (key.upper()[:6], key, "0", "0", "")
-
 
 # ──────────────────────────────────────────────────────────────────────
 # BMS API
@@ -133,9 +120,7 @@ API_URL = (
     "showtimes-by-event/primary-dynamic"
 )
 
-
-def fetch_bms(event_code, date_code, region_code, region_slug,
-              lat, lon, geohash):
+def fetch_bms(event_code, date_code, region_code, region_slug, lat, lon, geohash):
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -166,19 +151,20 @@ def fetch_bms(event_code, date_code, region_code, region_slug,
         "isDesktop": "true",
         "regionCode": region_code,
         "xLocationShared": "false",
-        "memberId": "", "lsId": "", "subCode": "",
-        "lat": lat, "lon": lon,
+        "memberId": "",
+        "lsId": "",
+        "subCode": "",
+        "lat": lat,
+        "lon": lon,
     }
     try:
-        resp = requests.get(API_URL, headers=headers,
-                            params=params, timeout=15)
+        resp = requests.get(API_URL, headers=headers, params=params, timeout=15)
         if resp.status_code == 200:
             return resp.json()
         print(f"  HTTP {resp.status_code}")
     except requests.RequestException as e:
         print(f"  Request failed: {e}")
-    return None
-
+        return None
 
 # ──────────────────────────────────────────────────────────────────────
 # PARSERS
@@ -200,7 +186,6 @@ def parse_movie_info(data):
                     info["name"] = d.get("text", info["name"])
     return info
 
-
 def parse_dates(data):
     dates = []
     for w in data.get("data", {}).get("topStickyWidgets", []):
@@ -210,12 +195,13 @@ def parse_dates(data):
             texts = item.get("data", [])
             if len(texts) >= 3:
                 style = item.get("styleId", "")
-                dates.append(DateInfo(
-                    date_code=item.get("id", ""),
-                    status=DATE_STYLE_MAP.get(style, "UNKNOWN"),
-                ))
+                dates.append(
+                    DateInfo(
+                        date_code=item.get("id", ""),
+                        status=DATE_STYLE_MAP.get(style, "UNKNOWN"),
+                    )
+                )
     return dates
-
 
 def parse_shows(data):
     shows = []
@@ -231,17 +217,13 @@ def parse_shows(data):
                 addl = card.get("additionalData", {})
                 vname = addl.get("venueName", "Unknown")
                 vcode = addl.get("venueCode", "")
-
                 for st in card.get("showtimes", []):
                     sa = st.get("additionalData", {})
                     date_code = str(
-                        sa.get("showDateCode", "")
-                        or sa.get("dateCode", "")
+                        sa.get("showDateCode", "") or sa.get("dateCode", "")
                     ).strip()
-                    if not date_code and re.match(
-                            r"^\d{8}", sa.get("cutOffDateTime", "")):
+                    if not date_code and re.match(r"^\d{8}", sa.get("cutOffDateTime", "")):
                         date_code = sa["cutOffDateTime"][:8]
-
                     show = ShowInfo(
                         venue_code=vcode,
                         venue_name=vname,
@@ -249,51 +231,43 @@ def parse_shows(data):
                         date_code=date_code,
                         time=st.get("title", ""),
                         time_code=sa.get("showTimeCode", ""),
-                        screen_attr=(st.get("screenAttr", "")
-                                     or sa.get("attributes", "")),
+                        screen_attr=(st.get("screenAttr", "") or sa.get("attributes", "")),
                     )
                     for cat in sa.get("categories", []):
                         ca = str(cat.get("availStatus", ""))
                         lbl, _ = AVAIL_STATUS_MAP.get(ca, ("UNKNOWN", ""))
-                        show.categories.append(CatInfo(
-                            name=cat.get("priceDesc", ""),
-                            price=cat.get("curPrice", "0"),
-                            status=ca,
-                        ))
+                        show.categories.append(
+                            CatInfo(
+                                name=cat.get("priceDesc", ""),
+                                price=cat.get("curPrice", "0"),
+                                status=ca,
+                            )
+                        )
                     shows.append(show)
     return shows
-
 
 # ──────────────────────────────────────────────────────────────────────
 # FILTERING
 # ──────────────────────────────────────────────────────────────────────
 def filter_shows(shows, theatre_filter, time_periods, date_codes, screen_filter=""):
     result = []
-    kws = [k.strip().lower() for k in theatre_filter.split(",")
-           if k.strip()] if theatre_filter else []
-    periods = [p.strip().lower() for p in time_periods.split(",")
-               if p.strip()] if time_periods else []
-    dates_set = set(d.strip() for d in date_codes.split(",")
-                    if d.strip()) if date_codes else set()
-    screens_set = {s.strip().upper() for s in screen_filter.split(",") 
-                    if s.strip()} if screen_filter else set()
-
+    kws = [k.strip().lower() for k in theatre_filter.split(",") if k.strip()] if theatre_filter else []
+    periods = [p.strip().lower() for p in time_periods.split(",") if p.strip()] if time_periods else []
+    dates_set = set(d.strip() for d in date_codes.split(",") if d.strip()) if date_codes else set()
+    screens_set = {s.strip().upper() for s in screen_filter.split(",") if s.strip()} if screen_filter else set()
+    
     for s in shows:
-
         # Screen attribute filter
         if screens_set and s.screen_attr.strip().upper() not in screens_set:
             continue
-
         # Theatre filter
         if kws:
             name_lower = s.venue_name.lower()
             if not any(k in name_lower for k in kws):
                 continue
-
         # Date filter
         if dates_set and s.date_code and s.date_code not in dates_set:
             continue
-
         # Time period filter
         if periods:
             try:
@@ -309,10 +283,8 @@ def filter_shows(shows, theatre_filter, time_periods, date_codes, screen_filter=
                         break
             if not matched:
                 continue
-
         result.append(s)
     return result
-
 
 # ──────────────────────────────────────────────────────────────────────
 # STATE (for change detection between runs)
@@ -324,11 +296,12 @@ def load_state():
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
-
 def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
 
+def is_open(status):
+    return status in ("BOOKABLE", "AVAILABLE")
 
 def build_state(shows, dates):
     old_state = load_state()
@@ -355,13 +328,10 @@ def build_state(shows, dates):
             date_state[d.date_code] = old_dates[d.date_code]
         else:
             date_state[d.date_code] = d.status
-
     return {"shows": show_state, "dates": date_state}
-
 
 def detect_changes(old_state, new_state):
     changes = []
-
     # New dates opening
     old_dates = old_state.get("dates", {})
     new_dates = new_state.get("dates", {})
@@ -373,7 +343,6 @@ def detect_changes(old_state, new_state):
 
     old_shows = old_state.get("shows", {})
     new_shows = new_state.get("shows", {})
-
     # New showtimes
     for key in set(new_shows) - set(old_shows):
         s = new_shows[key]
@@ -382,28 +351,17 @@ def detect_changes(old_state, new_state):
             f"🆕 NEW: {s['venue']} {s['time']}{scr} [{s['date']}] "
             f"— {s['cat']} ₹{s['price']}"
         )
-
     # Sold out → available
     for key, new_s in new_shows.items():
         old_s = old_shows.get(key)
         if old_s and old_s["status"] == "0" and new_s["status"] != "0":
-            lbl, ico = AVAIL_STATUS_MAP.get(
-                new_s["status"], ("UNKNOWN", "⚪")
-            )
+            lbl, ico = AVAIL_STATUS_MAP.get(new_s["status"], ("UNKNOWN", "⚪"))
             scr = f" [{new_s['screen']}]" if new_s.get("screen") else ""
             changes.append(
                 f"{ico} BACK: {new_s['venue']} {new_s['time']}{scr} "
                 f"[{new_s['date']}] — {new_s['cat']} → {lbl}"
             )
-
     return changes
-
-# ──────────────────────────────────────────────────────────────────────
-# To check if a show is open for booking (BOOKABLE or AVAILABLE)
-# ──────────────────────────────────────────────────────────────────────
-
-def is_open(status):
-    return status in ("BOOKABLE", "AVAILABLE")
 
 # ──────────────────────────────────────────────────────────────────────
 # EMAIL NOTIFICATION (Resend)
@@ -411,47 +369,33 @@ def is_open(status):
 def _cat_status_label(status):
     return AVAIL_STATUS_MAP.get(status, ("UNKNOWN", ""))[0]
 
-
 def send_email(subject, changes, shows, movie_info):
     api_key = RESEND_API_KEY.strip()
     to = RESEND_TO_EMAIL.strip()
     frm = RESEND_FROM_EMAIL.strip() or "onboarding@resend.dev"
-
     if not api_key or not to:
         print("  ⚠️  Skipping email — RESEND_API_KEY or RESEND_TO_EMAIL not set.")
         return
-
     now_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
     movie_name = movie_info.get("name", "Movie")
 
     # Build changes HTML
     changes_html = ""
     if changes:
-        rows = "".join(
-            f'<li style="padding:3px 0;font-size:14px;">{escape(c)}</li>'
-            for c in changes
-        )
+        rows = "".join(f'<li style="padding:3px 0;font-size:14px;">{escape(c)}</li>' for c in changes)
         changes_html = f"""
-        <h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">
-            Changes Detected
-        </h3>
-        <ul style="margin:0 0 20px 0;padding-left:20px;line-height:1.6;color:#333;">
-            {rows}
-        </ul>"""
+<h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;"> Changes Detected </h3>
+<ul style="margin:0 0 20px 0;padding-left:20px;line-height:1.6;color:#333;"> {rows} </ul>"""
 
     # Build shows section grouped by venue
     venue_groups = {}
     for s in shows:
         venue_groups.setdefault(s.venue_name, []).append(s)
-
     shows_html = ""
     for vname, vshows in venue_groups.items():
         show_rows = ""
         for s in vshows:
-            cats = " | ".join(
-                f"{escape(c.name)} Rs.{escape(c.price)} ({_cat_status_label(c.status)})"
-                for c in s.categories
-            )
+            cats = " | ".join(f"{escape(c.name)} Rs.{escape(c.price)} ({_cat_status_label(c.status)})" for c in s.categories)
             fmt = f" [{escape(s.screen_attr)}]" if s.screen_attr else ""
             show_rows += (
                 f'<tr>'
@@ -463,41 +407,24 @@ def send_email(subject, changes, shows, movie_info):
                 f'{cats}</td>'
                 f'</tr>'
             )
-
         shows_html += f"""
-        <p style="margin:14px 0 4px 0;font-size:14px;font-weight:bold;color:#333;">
-            {escape(vname)}
-        </p>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <tr style="background:#f5f5f5;">
-                <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd;
-                           font-weight:bold;">Time</th>
-                <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd;
-                           font-weight:bold;">Categories</th>
-            </tr>
-            {show_rows}
-        </table>"""
+<p style="margin:14px 0 4px 0;font-size:14px;font-weight:bold;color:#333;"> {escape(vname)} </p>
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+<tr style="background:#f5f5f5;">
+<th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Time</th>
+<th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Categories</th>
+</tr> {show_rows}
+</table>"""
 
     html = f"""<!doctype html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;
-             font-size:14px;color:#333;background:#fff;">
-    <h2 style="margin:0 0 4px 0;font-size:18px;color:#111;">
-        BMS Alert: {escape(movie_name)}
-    </h2>
-    <p style="margin:0 0 20px 0;font-size:13px;color:#666;">
-        {escape(now_str)}
-    </p>
-    <hr style="border:none;border-top:1px solid #ddd;margin:0 0 20px 0;">
-    {changes_html}
-    <h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">
-        Current Showtimes
-    </h3>
-    {shows_html}
-    <p style="margin:24px 0 0 0;font-size:12px;color:#999;">
-        This is an automated alert from BMS Ticket Notifier.
-    </p>
+<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif; font-size:14px;color:#333;background:#fff;">
+<h2 style="margin:0 0 4px 0;font-size:18px;color:#111;"> BMS Alert: {escape(movie_name)} </h2>
+<p style="margin:0 0 20px 0;font-size:13px;color:#666;"> {escape(now_str)} </p>
+<hr style="border:none;border-top:1px solid #ddd;margin:0 0 20px 0;"> {changes_html}
+<h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;"> Current Showtimes </h3> {shows_html}
+<p style="margin:24px 0 0 0;font-size:12px;color:#999;"> This is an automated alert from BMS Ticket Notifier. </p>
 </body>
 </html>"""
 
@@ -511,10 +438,7 @@ def send_email(subject, changes, shows, movie_info):
     for vname, vshows in venue_groups.items():
         plain_lines.append(f"\n{vname}")
         for s in vshows:
-            cats = " | ".join(
-                f"{c.name} Rs.{c.price} ({_cat_status_label(c.status)})"
-                for c in s.categories
-            )
+            cats = " | ".join(f"{c.name} Rs.{c.price} ({_cat_status_label(c.status)})" for c in s.categories)
             fmt = f" [{s.screen_attr}]" if s.screen_attr else ""
             plain_lines.append(f"  {s.time}{fmt} - {cats}")
     plain_lines.extend(["", "This is an automated alert from BMS Ticket Notifier."])
@@ -528,9 +452,11 @@ def send_email(subject, changes, shows, movie_info):
                 "Content-Type": "application/json",
             },
             json={
-                "from": frm, "to": [to],
+                "from": frm,
+                "to": [to],
                 "subject": subject,
-                "text": plain, "html": html,
+                "text": plain,
+                "html": html,
             },
             timeout=15,
         )
@@ -542,7 +468,6 @@ def send_email(subject, changes, shows, movie_info):
     except requests.RequestException as e:
         print(f"  ❌ Email failed: {e}")
         sys.exit(1)
-
 
 # ──────────────────────────────────────────────────────────────────────
 # MAIN
@@ -568,20 +493,19 @@ def main():
         event_code = parsed["event_code"]
         region_slug = parsed["region_slug"]
         url_date = parsed.get("date_code", "")
-
         if not event_code or not region_slug:
             print(f"  ❌ Invalid BMS_URL: {url}")
             continue
-
         region_code, region_slug_r, lat, lon, geohash = resolve_region(region_slug)
 
         # Determine dates to check for this URL
         raw_dates = CONFIG["dates"].strip()
         if raw_dates:
-            target_dates = set(d.strip() for d in raw_dates.split(",") if d.strip())
-            filtered_dates = [d for d in all_dates if d.date_code in target_dates]
+            date_list = [d.strip() for d in raw_dates.split(",") if d.strip()]
+        elif url_date:
+            date_list = [url_date]
         else:
-            filtered_dates = all_dates
+            date_list = [""]
 
         screen_filter = CONFIG["screen"].strip()
         print(f"  Event: {event_code}  Region: {region_code}  Target Screen(s): [{screen_filter or 'ALL'}]  Dates: {date_list}")
@@ -592,14 +516,11 @@ def main():
             if not data:
                 print(f"  ⚠️  No data received for event {event_code} [{screen_filter or 'ALL'}] on date {dc or '(default)'}")
                 continue
-
             m_info = parse_movie_info(data)
             if m_info["name"] and m_info["name"] not in movie_names:
                 movie_names.append(m_info["name"])
-
             dates_found = parse_dates(data)
             shows_found = parse_shows(data)
-
             all_dates.extend(dates_found)
             all_shows.extend(shows_found)
 
@@ -628,27 +549,30 @@ def main():
     # Print current status
     print(f"\n  Current status ({len(filtered)} shows):")
     for s in filtered:
-        cats = ", ".join(
-            f"{c.name}=₹{c.price}({AVAIL_STATUS_MAP.get(c.status, ('?',''))[0]})"
-            for c in s.categories
-        )
+        cats = ", ".join(f"{c.name}=₹{c.price}({AVAIL_STATUS_MAP.get(c.status, ('?',''))[0]})" for c in s.categories)
         fmt = f"|{s.screen_attr}" if s.screen_attr else ""
         print(f"    {s.venue_name} — {s.time}{fmt} [{s.date_code}] — {cats}")
 
+    # Filter dates to match BMS_DATES configuration before building state
+    raw_dates = CONFIG["dates"].strip()
+    if raw_dates:
+        target_dates = set(d.strip() for d in raw_dates.split(",") if d.strip())
+        filtered_dates = [d for d in all_dates if d.date_code in target_dates]
+    else:
+        filtered_dates = all_dates
+
     # Build state & detect changes
-    new_state = build_state(filtered, all_dates)
+    new_state = build_state(filtered, filtered_dates)
     old_state = load_state()
     changes = []
     if old_state:
         changes = detect_changes(old_state, new_state)
-
     save_state(new_state)
 
     if changes:
         print(f"\n  ⚡ {len(changes)} change(s) detected:")
         for c in changes:
             print(f"     {c}")
-
         screens = ", ".join(sorted(set(s.screen_attr for s in filtered if s.screen_attr)))
         screen_part = f" | {screens}" if screens else ""
         send_email(
@@ -661,6 +585,6 @@ def main():
         print("  ✅ No changes since last check.")
 
     print("\n  Done.")
-    
+
 if __name__ == "__main__":
     main()
