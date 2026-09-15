@@ -331,7 +331,9 @@ def save_state(state):
 
 
 def build_state(shows, dates):
-    """Build a comparable state dict."""
+    old_state = load_state()
+    old_dates = old_state.get("dates", {})
+
     show_state = {}
     for s in shows:
         for c in s.categories:
@@ -346,9 +348,13 @@ def build_state(shows, dates):
                 "screen": s.screen_attr,
             }
 
-    date_state = {
-        d.date_code: d.status for d in dates
-    }
+    date_state = {}
+    for d in dates:
+        # Preserve open status if API temporarily returns NOT_OPEN
+        if old_dates.get(d.date_code) in ("BOOKABLE", "AVAILABLE") and d.status not in ("BOOKABLE", "AVAILABLE"):
+            date_state[d.date_code] = old_dates[d.date_code]
+        else:
+            date_state[d.date_code] = d.status
 
     return {"shows": show_state, "dates": date_state}
 
@@ -360,9 +366,9 @@ def detect_changes(old_state, new_state):
     old_dates = old_state.get("dates", {})
     new_dates = new_state.get("dates", {})
     for dc, status in new_dates.items():
-        old_status = old_dates.get(dc)
-        if (old_status == "NOT_OPEN"
-                and status in ("BOOKABLE", "AVAILABLE")):
+        old_status = old_dates.get(dc, "NOT_OPEN")
+        # Only alert if it moves from closed to open
+        if not is_open(old_status) and is_open(status):
             changes.append(f"📅 NEW DATE OPENED: {dc}")
 
     old_shows = old_state.get("shows", {})
@@ -392,6 +398,12 @@ def detect_changes(old_state, new_state):
 
     return changes
 
+# ──────────────────────────────────────────────────────────────────────
+# To check if a show is open for booking (BOOKABLE or AVAILABLE)
+# ──────────────────────────────────────────────────────────────────────
+
+def is_open(status):
+    return status in ("BOOKABLE", "AVAILABLE")
 
 # ──────────────────────────────────────────────────────────────────────
 # EMAIL NOTIFICATION (Resend)
@@ -566,11 +578,10 @@ def main():
         # Determine dates to check for this URL
         raw_dates = CONFIG["dates"].strip()
         if raw_dates:
-            date_list = [d.strip() for d in raw_dates.split(",") if d.strip()]
-        elif url_date:
-            date_list = [url_date]
+            target_dates = set(d.strip() for d in raw_dates.split(",") if d.strip())
+            filtered_dates = [d for d in all_dates if d.date_code in target_dates]
         else:
-            date_list = [""]
+            filtered_dates = all_dates
 
         screen_filter = CONFIG["screen"].strip()
         print(f"  Event: {event_code}  Region: {region_code}  Target Screen(s): [{screen_filter or 'ALL'}]  Dates: {date_list}")
@@ -591,7 +602,7 @@ def main():
 
             all_dates.extend(dates_found)
             all_shows.extend(shows_found)
-            
+
             # Extract and log screens found in the payload for this date
             screens_in_data = sorted({s.screen_attr for s in shows_found if s.screen_attr})
             screen_info = ", ".join(screens_in_data) if screens_in_data else "Standard/Default"
