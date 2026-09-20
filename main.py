@@ -391,42 +391,31 @@ def send_email(subject, changes, shows, movie_info):
     venue_groups = {}
     for s in shows:
         venue_groups.setdefault(s.venue_name, []).append(s)
+
     shows_html = ""
     for vname, vshows in venue_groups.items():
         show_rows = ""
         for s in vshows:
             cats = " | ".join(f"{escape(c.name)} Rs.{escape(c.price)} ({_cat_status_label(c.status)})" for c in s.categories)
             fmt = f" [{escape(s.screen_attr)}]" if s.screen_attr else ""
-            show_rows += (
-                f'<tr>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #ddd;'
-                f'font-size:13px;vertical-align:top;">'
-                f'{escape(s.time)}{fmt}</td>'
-                f'<td style="padding:5px 8px;border-bottom:1px solid #ddd;'
-                f'font-size:13px;vertical-align:top;">'
-                f'{cats}</td>'
-                f'</tr>'
-            )
+            show_rows += (f'<tr>'
+                          f'<td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:13px;vertical-align:top;">{escape(s.date_code)}</td>'
+                          f'<td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:13px;vertical-align:top;">{escape(s.time)}{fmt}</td>'
+                          f'<td style="padding:5px 8px;border-bottom:1px solid #ddd;font-size:13px;vertical-align:top;">{cats}</td>'
+                          f'</tr>'
+                         )
         shows_html += f"""
-<p style="margin:14px 0 4px 0;font-size:14px;font-weight:bold;color:#333;"> {escape(vname)} </p>
-<table style="width:100%;border-collapse:collapse;font-size:13px;">
-<tr style="background:#f5f5f5;">
-<th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Time</th>
-<th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Categories</th>
-</tr> {show_rows}
-</table>"""
-
-    html = f"""<!doctype html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif; font-size:14px;color:#333;background:#fff;">
-<h2 style="margin:0 0 4px 0;font-size:18px;color:#111;"> BMS Alert: {escape(movie_name)} </h2>
-<p style="margin:0 0 20px 0;font-size:13px;color:#666;"> {escape(now_str)} </p>
-<hr style="border:none;border-top:1px solid #ddd;margin:0 0 20px 0;"> {changes_html}
-<h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;"> Current Showtimes </h3> {shows_html}
-<p style="margin:24px 0 0 0;font-size:12px;color:#999;"> This is an automated alert from BMS Ticket Notifier. </p>
-</body>
-</html>"""
+        <p style="margin:14px 0 4px 0;font-size:14px;font-weight:bold;color:#333;">
+          {escape(vname)}
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr style="background:#f5f5f5;">
+            <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Date</th>
+            <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Time</th>
+            <th style="padding:5px 8px;text-align:left;border-bottom:1px solid #ddd; font-weight:bold;">Categories</th>
+          </tr>
+          {show_rows}
+        </table>"""
 
     # Build plain-text version with full show details
     plain_lines = [subject, "", f"Checked at: {now_str}", ""]
@@ -434,13 +423,15 @@ def send_email(subject, changes, shows, movie_info):
         plain_lines.append("Changes Detected:")
         plain_lines.extend(f"  - {c}" for c in changes)
         plain_lines.append("")
+
     plain_lines.append("Current Showtimes:")
     for vname, vshows in venue_groups.items():
         plain_lines.append(f"\n{vname}")
         for s in vshows:
             cats = " | ".join(f"{c.name} Rs.{c.price} ({_cat_status_label(c.status)})" for c in s.categories)
             fmt = f" [{s.screen_attr}]" if s.screen_attr else ""
-            plain_lines.append(f"  {s.time}{fmt} - {cats}")
+            plain_lines.append(f"  [{s.date_code}] {s.time}{fmt} - {cats}")
+
     plain_lines.extend(["", "This is an automated alert from BMS Ticket Notifier."])
     plain = "\n".join(plain_lines)
 
