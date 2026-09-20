@@ -376,6 +376,7 @@ def send_email(subject, changes, shows, movie_info):
     if not api_key or not to:
         print("  ⚠️  Skipping email — RESEND_API_KEY or RESEND_TO_EMAIL not set.")
         return
+
     now_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
     movie_name = movie_info.get("name", "Movie")
 
@@ -384,8 +385,12 @@ def send_email(subject, changes, shows, movie_info):
     if changes:
         rows = "".join(f'<li style="padding:3px 0;font-size:14px;">{escape(c)}</li>' for c in changes)
         changes_html = f"""
-<h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;"> Changes Detected </h3>
-<ul style="margin:0 0 20px 0;padding-left:20px;line-height:1.6;color:#333;"> {rows} </ul>"""
+        <h3 style="margin:0 0 8px 0;font-size:15px;font-weight:bold;color:#333;">
+          Changes Detected
+        </h3>
+        <ul style="margin:0 0 20px 0;padding-left:20px;line-height:1.6;color:#333;">
+          {rows}
+        </ul>"""
 
     # Build shows section grouped by venue
     venue_groups = {}
@@ -416,6 +421,20 @@ def send_email(subject, changes, shows, movie_info):
           </tr>
           {show_rows}
         </table>"""
+
+    # Combine into full HTML email body
+    html = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #111;">{escape(subject)}</h2>
+      <p style="margin: 0 0 16px 0; font-size: 12px; color: #666;">Checked at: {now_str}</p>
+      {changes_html}
+      <h3 style="margin: 16px 0 8px 0; font-size: 15px; font-weight: bold; color: #333;">Current Showtimes</h3>
+      {shows_html}
+      <p style="margin-top: 24px; font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 12px;">
+        This is an automated alert from BMS Ticket Notifier.
+      </p>
+    </div>
+    """
 
     # Build plain-text version with full show details
     plain_lines = [subject, "", f"Checked at: {now_str}", ""]
