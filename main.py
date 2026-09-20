@@ -1,6 +1,10 @@
 """
-BMS Ticket Checker — CI/Headless mode for GitHub Actions. Runs once, checks all configured watches, emails on changes. State is persisted via a JSON artifact. Configure via environment variables or edit the CONFIG below.
+BMS Ticket Checker — CI/Headless mode for GitHub Actions.
+Runs once, checks all configured watches, emails on changes.
+State is persisted via a JSON artifact.
+Configure via environment variables or edit the CONFIG below.
 """
+
 import os
 import re
 import sys
@@ -164,7 +168,7 @@ def fetch_bms(event_code, date_code, region_code, region_slug, lat, lon, geohash
         print(f"  HTTP {resp.status_code}")
     except requests.RequestException as e:
         print(f"  Request failed: {e}")
-        return None
+    return None
 
 # ──────────────────────────────────────────────────────────────────────
 # PARSERS
@@ -255,19 +259,24 @@ def filter_shows(shows, theatre_filter, time_periods, date_codes, screen_filter=
     periods = [p.strip().lower() for p in time_periods.split(",") if p.strip()] if time_periods else []
     dates_set = set(d.strip() for d in date_codes.split(",") if d.strip()) if date_codes else set()
     screens_set = {s.strip().upper() for s in screen_filter.split(",") if s.strip()} if screen_filter else set()
-    
+
     for s in shows:
-        # Screen attribute filter
-        if screens_set and s.screen_attr.strip().upper() not in screens_set:
-            continue
+        # Screen attribute filter (substring matching)
+        if screens_set:
+            s_attr = s.screen_attr.strip().upper()
+            if not any(target in s_attr for target in screens_set):
+                continue
+
         # Theatre filter
         if kws:
             name_lower = s.venue_name.lower()
             if not any(k in name_lower for k in kws):
                 continue
+
         # Date filter
         if dates_set and s.date_code and s.date_code not in dates_set:
             continue
+
         # Time period filter
         if periods:
             try:
@@ -283,6 +292,7 @@ def filter_shows(shows, theatre_filter, time_periods, date_codes, screen_filter=
                         break
             if not matched:
                 continue
+
         result.append(s)
     return result
 
@@ -306,7 +316,6 @@ def is_open(status):
 def build_state(shows, dates):
     old_state = load_state()
     old_dates = old_state.get("dates", {})
-
     show_state = {}
     for s in shows:
         for c in s.categories:
@@ -343,6 +352,7 @@ def detect_changes(old_state, new_state):
 
     old_shows = old_state.get("shows", {})
     new_shows = new_state.get("shows", {})
+
     # New showtimes
     for key in set(new_shows) - set(old_shows):
         s = new_shows[key]
@@ -351,6 +361,7 @@ def detect_changes(old_state, new_state):
             f"🆕 NEW: {s['venue']} {s['time']}{scr} [{s['date']}] "
             f"— {s['cat']} ₹{s['price']}"
         )
+
     # Sold out → available
     for key, new_s in new_shows.items():
         old_s = old_shows.get(key)
@@ -378,7 +389,6 @@ def send_email(subject, changes, shows, movie_info):
         return
 
     now_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
-    movie_name = movie_info.get("name", "Movie")
 
     # Build changes HTML
     changes_html = ""
@@ -503,9 +513,11 @@ def main():
         event_code = parsed["event_code"]
         region_slug = parsed["region_slug"]
         url_date = parsed.get("date_code", "")
+
         if not event_code or not region_slug:
             print(f"  ❌ Invalid BMS_URL: {url}")
             continue
+
         region_code, region_slug_r, lat, lon, geohash = resolve_region(region_slug)
 
         # Determine dates to check for this URL
@@ -526,11 +538,14 @@ def main():
             if not data:
                 print(f"  ⚠️  No data received for event {event_code} [{screen_filter or 'ALL'}] on date {dc or '(default)'}")
                 continue
+
             m_info = parse_movie_info(data)
             if m_info["name"] and m_info["name"] not in movie_names:
                 movie_names.append(m_info["name"])
+
             dates_found = parse_dates(data)
             shows_found = parse_shows(data)
+
             all_dates.extend(dates_found)
             all_shows.extend(shows_found)
 
@@ -574,15 +589,18 @@ def main():
     # Build state & detect changes
     new_state = build_state(filtered, filtered_dates)
     old_state = load_state()
+
     changes = []
     if old_state:
         changes = detect_changes(old_state, new_state)
+
     save_state(new_state)
 
     if changes:
         print(f"\n  ⚡ {len(changes)} change(s) detected:")
         for c in changes:
             print(f"     {c}")
+
         screens = ", ".join(sorted(set(s.screen_attr for s in filtered if s.screen_attr)))
         screen_part = f" | {screens}" if screens else ""
         send_email(
@@ -595,6 +613,7 @@ def main():
         print("  ✅ No changes since last check.")
 
     print("\n  Done.")
+
 
 if __name__ == "__main__":
     main()
