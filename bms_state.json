@@ -1,7 +1,17 @@
 {
-  "shows": {},
+  "shows": {
+    "PRHN|256324|20260926| EXECUTIVE + 3D Glass": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "08:15 AM",
+      "date": "20260926",
+      "cat": " EXECUTIVE + 3D Glass",
+      "price": "325.00",
+      "status": "1",
+      "screen": "Infinity Vision 3D"
+    }
+  },
   "dates": {
-    "20260926": "AVAILABLE",
-    "20260927": "BOOKABLE"
+    "20260926": "BOOKABLE",
+    "20260927": "AVAILABLE"
   }
 }
