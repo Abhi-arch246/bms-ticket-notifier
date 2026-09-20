@@ -19,7 +19,7 @@ CONFIG = {
     "dates": os.getenv("BMS_DATES", ""),                        # comma-separated YYYYMMDD, empty = from URL
     "theatre": os.getenv("BMS_THEATRE", ""),                    # substring filter, empty = all
     "time_period": os.getenv("BMS_TIME", ""),                   # e.g. "evening,night", empty = all
-    "screen": os.getenv("BMS_SCREEN", "")   # e.g "HDR BY BARCO,PCX SCREEN,DOLBY CINEMA", empty = all
+    "screen": os.getenv("BMS_SCREEN", "HDR BY BARCO,PCX SCREEN,DOLBY CINEMA,EPIQ,BARCO 4K LASER")   # e.g "HDR BY BARCO,PCX SCREEN,DOLBY CINEMA", empty = all
 }
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
