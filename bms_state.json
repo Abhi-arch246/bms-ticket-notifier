@@ -1,5 +1,23 @@
 {
   "shows": {
+    "PRHN|256316|20260926|EXECUTIVE": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "08:00 AM",
+      "date": "20260926",
+      "cat": "EXECUTIVE",
+      "price": "295.00",
+      "status": "2",
+      "screen": ""
+    },
+    "PRHN|256209|20260926|EXECUTIVE": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "08:45 AM",
+      "date": "20260926",
+      "cat": "EXECUTIVE",
+      "price": "295.00",
+      "status": "1",
+      "screen": "Infinity Vision 2D"
+    },
     "PRHN|256333|20260927|EXECUTIVE": {
       "venue": "Prasads Multiplex: Hyderabad",
       "time": "08:00 AM",
@@ -35,10 +53,19 @@
       "price": "325.00",
       "status": "1",
       "screen": "Infinity Vision 3D"
+    },
+    "PRHN|256325|20260927| EXECUTIVE + 3D Glass": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "08:00 AM",
+      "date": "20260927",
+      "cat": " EXECUTIVE + 3D Glass",
+      "price": "325.00",
+      "status": "1",
+      "screen": "Infinity Vision 3D"
     }
   },
   "dates": {
-    "20260926": "BOOKABLE",
-    "20260927": "AVAILABLE"
+    "20260926": "AVAILABLE",
+    "20260927": "BOOKABLE"
   }
 }
