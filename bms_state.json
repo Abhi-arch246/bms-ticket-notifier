@@ -1,18 +1,7 @@
 {
-  "shows": {
-    "PRHN|256320|20260928|GOLD + 3D GlassL": {
-      "venue": "Prasads Multiplex: Hyderabad",
-      "time": "08:00 AM",
-      "date": "20260928",
-      "cat": "GOLD + 3D GlassL",
-      "price": "400.00",
-      "status": "2",
-      "screen": "PCX SCREEN"
-    }
-  },
+  "shows": {},
   "dates": {
     "20260926": "AVAILABLE",
-    "20260927": "AVAILABLE",
-    "20260928": "BOOKABLE"
+    "20260927": "BOOKABLE"
   }
 }
