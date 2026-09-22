@@ -24,7 +24,7 @@
       "date": "20260927",
       "cat": "EXECUTIVE",
       "price": "295.00",
-      "status": "2",
+      "status": "1",
       "screen": ""
     },
     "PRHN|256317|20260927|EXECUTIVE": {
@@ -45,24 +45,6 @@
       "status": "1",
       "screen": "Infinity Vision 2D"
     },
-    "PRHN|256215|20260926|GOLD + 3D GlassL": {
-      "venue": "Prasads Multiplex: Hyderabad",
-      "time": "08:15 AM",
-      "date": "20260926",
-      "cat": "GOLD + 3D GlassL",
-      "price": "400.00",
-      "status": "2",
-      "screen": "PCX Infinity Vis 3D"
-    },
-    "PRHN|256324|20260926| EXECUTIVE + 3D Glass": {
-      "venue": "Prasads Multiplex: Hyderabad",
-      "time": "08:15 AM",
-      "date": "20260926",
-      "cat": " EXECUTIVE + 3D Glass",
-      "price": "325.00",
-      "status": "1",
-      "screen": "Infinity Vision 3D"
-    },
     "PRHN|256325|20260927| EXECUTIVE + 3D Glass": {
       "venue": "Prasads Multiplex: Hyderabad",
       "time": "08:00 AM",
@@ -70,6 +52,15 @@
       "cat": " EXECUTIVE + 3D Glass",
       "price": "325.00",
       "status": "1",
+      "screen": "Infinity Vision 3D"
+    },
+    "PRHN|256726|20260927| EXECUTIVE + 3D Glass": {
+      "venue": "Prasads Multiplex: Hyderabad",
+      "time": "06:45 PM",
+      "date": "20260927",
+      "cat": " EXECUTIVE + 3D Glass",
+      "price": "325.00",
+      "status": "3",
       "screen": "Infinity Vision 3D"
     }
   },
